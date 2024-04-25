@@ -19,7 +19,7 @@ var totalNumOfUsers = 0;
 
 app.get('/*', function (req, res) {
     const options = {
-        root: process.getcwd()
+        root: process.cwd()
     };
 
     var fileName = req.params['0'] || 'index.html';
