@@ -6,6 +6,7 @@ const app = express();
 app.use(json());
 app.use(urlencoded({ extended: false }));
 app.use(cors());
+app.use(express.static('public'));
 
 const pusher = new Pusher({
     appId: "1793495",
