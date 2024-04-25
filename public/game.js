@@ -1,6 +1,6 @@
 import Login from './scenes/Login.js';
 import Lobby from './scenes/Lobby.js';
-import EventDispatcher from "./EventDispatcher.js";
+import { EventDispatcher } from "./utils.js";
 
 Pusher.logToConsole = true;
 
@@ -12,7 +12,7 @@ export var playerRoom = "";
 const pusher = new Pusher('338268c30f0c785cfd2f', {
     cluster: 'ap2',
     userAuthentication: {
-        paramsProvider: () => { return { player_name: playerName }; },
+        paramsProvider: () => { return { name: playerName }; },
     },
 });
 
@@ -28,11 +28,11 @@ emitter.on('nameSubmitted', function (name) {
         playerId = user_data.id;
         console.log(user_data);
         playerRoom = user_data.user_info.room;
-        document.getElementById('player-id').textContent = `Player ID: ${playerId}`;
+        document.getElementById('player-id').textContent = `player id: ${playerId}`;
     
         const lobbyChannel = pusher.subscribe('lobby-channel');
         lobbyChannel.bind("pusher:subscription_count", (data) => {
-            document.getElementById('lobby-count').textContent = `Lobby Count: ${data.subscription_count}`;
+            document.getElementById('lobby-count').textContent = `lobby count: ${data.subscription_count}`;
         });
     });
 });

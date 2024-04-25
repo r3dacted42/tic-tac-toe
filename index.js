@@ -37,6 +37,7 @@ app.post("/pusher/user-auth", (req, res) => {
     const user = {
         id: userId,
         user_info: {
+            name: req.body.name,
             room: userRoom,
         },
     };
