@@ -7,8 +7,6 @@ app.use(json());
 app.use(urlencoded({ extended: false }));
 app.use(cors());
 
-app.use(express.static('public'));
-
 const pusher = new Pusher({
     appId: "1793495",
     key: "338268c30f0c785cfd2f",
@@ -18,6 +16,23 @@ const pusher = new Pusher({
 });
 
 var totalNumOfUsers = 0;
+
+app.get('/*', function (req, res) {
+    const options = {
+        root: 'public'
+    };
+
+    var fileName = req.params['0'] || 'index.html';
+    console.log(fileName);
+
+    res.sendFile(fileName, options, function (err) {
+        if (err) {
+            console.error('Error sending file:', err);
+        } else {
+            console.log('Sent:', fileName);
+        }
+    });
+});
 
 app.post("/pusher/user-auth", (req, res) => {
     const socketId = req.body.socket_id;
