@@ -34,4 +34,5 @@ app.post("/pusher/user-auth", (req, res) => {
 });
 
 const port = process.env.PORT || 5000;
+console.log('listening on port ' + port);
 app.listen(port);
