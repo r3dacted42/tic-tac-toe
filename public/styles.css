@@ -1,0 +1,28 @@
+body {
+    background-color: #111;
+    color: #fff;
+    font-family: 'Courier New', Courier, monospace;
+    padding: 0;
+    margin: 0;
+}
+
+#player-id {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+}
+
+#lobby-count {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+}
+
+#app {
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
