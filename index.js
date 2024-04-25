@@ -1,5 +1,4 @@
 const Pusher = require("pusher");
-const http = require('http');
 const express = require('express');
 const cors = require("cors");
 
