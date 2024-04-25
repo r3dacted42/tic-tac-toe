@@ -1,4 +1,4 @@
-import EventDispatcher from "../eventDispatcher.js";
+import EventDispatcher from "./EventDispatcher.js";
 
 export default class Login extends Phaser.Scene {
     constructor() {

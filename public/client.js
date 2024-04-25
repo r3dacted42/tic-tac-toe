@@ -1,5 +1,5 @@
 import Login from './scenes/Login.js';
-import EventDispatcher from "../eventDispatcher.js";
+import EventDispatcher from "./EventDispatcher.js";
 
 Pusher.logToConsole = true;
 
