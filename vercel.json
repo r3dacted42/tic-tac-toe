@@ -11,13 +11,17 @@
         }
     ],
     "routes": [
-      {
-        "src": "/((?!.*\\.\\w+$).*)",
-        "dest": "/index.js"
-      },
-      {
-        "src": "/(.+\\.[a-z]+)$",
-        "dest": "/public/$1"
-      }
+        {
+            "src": "/",
+            "dest": "/public/index.html"
+        },
+        {
+            "src": "/((?!.*\\.\\w+$).*)",
+            "dest": "/index.js"
+        },
+        {
+            "src": "/(.+\\.[a-z]+)$",
+            "dest": "/public/$1"
+        }
     ]
 }
