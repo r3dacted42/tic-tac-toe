@@ -6,8 +6,18 @@
             "use": "@vercel/node"
         },
         {
-            "src": "/public/*",
+            "src": "public/**",
             "use": "@vercel/static"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/((?!.*\\.\\w+$).*)",
+            "dest": "/server.js"
+        },
+        {
+            "src": "/(.+\\.[a-z]+)$",
+            "dest": "/public/$1"
         }
     ]
 }
