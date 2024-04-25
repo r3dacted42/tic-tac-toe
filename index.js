@@ -16,40 +16,39 @@ const pusher = new Pusher({
     useTLS: true
 });
 
-var totalNumOfUsers = 0;
+function makeid(length) {
+    let result = '';
+    const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    let counter = 0;
+    while (counter < length) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+      counter += 1;
+    }
+    return result;
+}
 
-// app.get('/*', function (req, res) {
-//     const options = {
-//         root: process.cwd()
-//     };
-
-//     var fileName = req.params['0'] || 'index.html';
-//     console.log(fileName);
-
-//     res.sendFile(fileName, options, function (err) {
-//         if (err) {
-//             console.error('Error sending file:', err);
-//         } else {
-//             console.log('Sent:', fileName);
-//         }
-//     });
-// });
+var userRooms = new Map();
 
 app.post("/pusher/user-auth", (req, res) => {
     const socketId = req.body.socket_id;
+    var userId = `ttt_${Date.now()}`;
+    var userRoom = makeid(8);
     const user = {
-        id: `ttt_${Date.now()}`,
+        id: userId,
         user_info: {
-            name: req.body.playername,
+            room: userRoom,
         },
     };
     const authResponse = pusher.authenticateUser(socketId, user);
-    totalNumOfUsers++;
     res.send(authResponse);
+    userRooms.set(userRoom, userId);
 });
 
 const port = process.env.PORT || 5000;
-console.log('listening on port ' + port);
+if (process.env.DEV) {
+    console.log('running at http://localhost:' + port);
+}
 app.listen(port);
 
 export default app;
