@@ -6,7 +6,6 @@ const app = express();
 app.use(json());
 app.use(urlencoded({ extended: false }));
 app.use(cors());
-app.use(express.static('public'));
 
 const pusher = new Pusher({
     appId: "1793495",
@@ -20,7 +19,7 @@ var totalNumOfUsers = 0;
 
 app.get('/*', function (req, res) {
     const options = {
-        root: 'public'
+        root: process.getcwd()
     };
 
     var fileName = req.params['0'] || 'index.html';
