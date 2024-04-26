@@ -1,10 +1,12 @@
 import Login from './scenes/Login.js';
 import Lobby from './scenes/Lobby.js';
+import Play from './scenes/Play.js';
 import { EventDispatcher } from "./utils.js";
 
 Pusher.logToConsole = true;
 
 export var playerName = "";
+var signingIn = false;
 export var signedIn = false;
 export var playerId = "";
 export var playerRoom = "";
@@ -19,10 +21,10 @@ const pusher = new Pusher('338268c30f0c785cfd2f', {
 const emitter = EventDispatcher.getInstance();
 
 emitter.on('nameSubmitted', function (name) {
-    if (signedIn) return;
+    if (signedIn || signingIn) return;
     playerName = name;
     pusher.signin();
-    signedIn = true;
+    signingIn = true;
     pusher.bind('pusher:signin_success', function (data) {
         var user_data = JSON.parse(data.user_data);
         playerId = user_data.id;
@@ -34,8 +36,13 @@ emitter.on('nameSubmitted', function (name) {
         lobbyChannel.bind("pusher:subscription_count", (data) => {
             document.getElementById('lobby-count').textContent = `lobby count: ${data.subscription_count}`;
         });
+
+        signedIn = true;
+        emitter.emit('signin_success');
     });
 });
+
+
 
 const config = {
     type: Phaser.AUTO,
@@ -50,7 +57,7 @@ const config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
-    scene: [ Login, Lobby ]
+    scene: [ Login, Lobby, Play ]
 };
 
 const game = new Phaser.Game(config);

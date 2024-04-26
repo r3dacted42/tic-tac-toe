@@ -5,6 +5,8 @@ export default class Login extends Phaser.Scene {
     constructor() {
         super("login");
         this.emitter = EventDispatcher.getInstance();
+
+        this.emitter.on('signin_success', () => this.moveToLobby());
     }
 
     preload() {
@@ -44,31 +46,34 @@ export default class Login extends Phaser.Scene {
         this.returnKey.on('down', event => {
             var enteredName = this.nameField.getChildByName('field').value.trim();
             if (enteredName != "") {
-                this.emitter.emit('nameSubmitted', enteredName);
                 this.tweens.add({
                     targets: this.nameField,
                     y: this.cameras.main.height / 2 + 200,
                     alpha: 0,
                     duration: 500
                 });
-                this.welcomeMessage.setText(`welcome, ${playerName}`);
+                this.welcomeMessage.setText(`welcome, ${enteredName}`);
                 this.tweens.add({
                     targets: this.welcomeMessage,
                     y: this.cameras.main.height / 2 + 150,
                     alpha: 1,
                     duration: 500
                 }).addListener('complete', () => {
-                    setTimeout(() => {
-                        this.tweens.add({
-                            targets: [this.welcomeMessage, this.logo],
-                            alpha: 0,
-                            duration: 500
-                        }).addListener('complete', () => {
-                            this.scene.start('lobby');
-                        });
-                    }, 2000);
+                    this.emitter.emit('nameSubmitted', enteredName);                    
                 });
             }
         });
+    }
+
+    moveToLobby() {
+        setTimeout(() => {
+            this.tweens.add({
+                targets: [this.welcomeMessage, this.logo],
+                alpha: 0,
+                duration: 500
+            }).addListener('complete', () => {
+                this.scene.start('lobby');
+            });
+        }, 2000);
     }
 }
