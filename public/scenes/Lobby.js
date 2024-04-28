@@ -1,5 +1,5 @@
 import { EventDispatcher, Button } from "../utils.js";
-import { playerName, playerRoom } from "../game.js";
+import { lobbyCount, playerName, playerRoom } from "../game.js";
 
 export default class Lobby extends Phaser.Scene {
     constructor() {
@@ -33,5 +33,10 @@ export default class Lobby extends Phaser.Scene {
         this.joinButton = new Button(this.cameras.main.width / 2, this.cameras.main.height / 2 + 150, 0, 0.5, 87, 12, 'join', this, () => {
             console.log('join button clicked');
         });
+        this.lobbyCountText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2 + 200, 'players available: ', {fontSize:'12px'}).setOrigin(0.5, 0.5);
+    }
+
+    update() {
+        this.lobbyCountText.setText(`players available: ${lobbyCount - 1}`);
     }
 }

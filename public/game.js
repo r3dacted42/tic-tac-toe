@@ -10,6 +10,7 @@ var signingIn = false;
 export var signedIn = false;
 export var playerId = "";
 export var playerRoom = "";
+export var lobbyCount = 0;
 
 const pusher = new Pusher('338268c30f0c785cfd2f', {
     cluster: 'ap2',
@@ -34,7 +35,8 @@ emitter.on('nameSubmitted', function (name) {
     
         const lobbyChannel = pusher.subscribe('lobby-channel');
         lobbyChannel.bind("pusher:subscription_count", (data) => {
-            document.getElementById('lobby-count').textContent = `lobby count: ${data.subscription_count}`;
+            lobbyCount = data.subscription_count;
+            document.getElementById('lobby-count').textContent = `lobby count: ${lobbyCount}`;
         });
 
         signedIn = true;
@@ -46,7 +48,7 @@ emitter.on('nameSubmitted', function (name) {
 
 const config = {
     type: Phaser.AUTO,
-    width: 1024,
+    width: 768,
     height: 1024,
     backgroundColor: 0x111111,
     parent: 'game-container',

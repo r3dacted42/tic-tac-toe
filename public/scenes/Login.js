@@ -15,7 +15,7 @@ export default class Login extends Phaser.Scene {
     }
 
     create() {
-        this.logo = this.add.image(this.cameras.main.width / 2, this.cameras.main.height / 2, 'logo').setScale(0.5).setAlpha(0);
+        this.logo = this.add.image(this.cameras.main.width / 2, this.cameras.main.height / 2, 'logo').setScale(0.4).setAlpha(0);
         this.nameField = this.add.dom(this.cameras.main.width / 2, this.cameras.main.height / 2 + 100).createFromCache('formField').setAlpha(0);
         this.nameField.getChildByName('field').placeholder = 'enter your name';
         this.welcomeMessage = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2 + 100, "", { fontSize: '20px' }).setAlpha(0).setOrigin(0.5);
