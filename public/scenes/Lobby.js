@@ -15,13 +15,13 @@ export default class Lobby extends Phaser.Scene {
         let hello = this.add.text(100, 100, `hello there, ${playerName} :)`, {fontSize:'20px'}).setAlpha(0);
 
         let myCodeText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2  - 150, 'share your code: ', {fontSize:'20px'}).setOrigin(1, 0.5).setAlpha(0);
-        this.myCodeField = this.add.dom(this.cameras.main.width / 2, this.cameras.main.height / 2 - 150).createFromCache('formField').setOrigin(0, 0.5).setAlpha(0);
+        this.myCodeField = this.add.dom(this.cameras.main.width / 2, this.cameras.main.height / 2 - 150).createFromCache('textField').setOrigin(0, 0.5).setAlpha(0);
         this.myCodeField.getChildByName('field').disabled = true;
         this.myCodeField.getChildByName('field').value = playerRoom;
         this.roomCountText = this.add.text(this.cameras.main.width - 100, 100, 'players in room: ', {fontSize:'12px'}).setOrigin(1, 0.5).setAlpha(0);
 
         let enterCodeText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2, 'enter a code: ', {fontSize:'20px'}).setOrigin(1, 0.5).setAlpha(0);
-        this.enterCodeField = this.add.dom(this.cameras.main.width / 2, this.cameras.main.height / 2).createFromCache('formField').setOrigin(0, 0.5).setAlpha(0);
+        this.enterCodeField = this.add.dom(this.cameras.main.width / 2, this.cameras.main.height / 2).createFromCache('textField').setOrigin(0, 0.5).setAlpha(0);
         this.enterCodeField.getChildByName('field').placeholder = 'enter code';
 
         let returnKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
@@ -66,6 +66,9 @@ export default class Lobby extends Phaser.Scene {
             }).addListener('complete', () => {
                 this.scene.start('play', members);
             });
+            if (this.searchingTimer != null) {
+                this.searchingTimer.destroy();
+            }
         });
     }
 

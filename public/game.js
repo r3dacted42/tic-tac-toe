@@ -64,6 +64,9 @@ emitter.on('name_submitted', function (name) {
                 console.log('member removed');
                 console.log(member);
             });
+            roomChannel.bind("client-message_recvd", (message) => {
+                emitter.emit("message_recvd", (message));
+            });
         });
         roomChannel.bind("pusher:subscription_failed", (error) => {
             console.log(error);
@@ -99,6 +102,9 @@ function joinChannel(channel) {
         roomChannel.bind("pusher:member_removed", (member) => {
             console.log('member removed');
             console.log(member);
+        });
+        roomChannel.bind("client-message_recvd", (message) => {
+            emitter.emit("message_recvd", (message));
         });
         if (roomCount == 2) {
             emitter.emit('game_start', roomChannel.members);
@@ -148,6 +154,10 @@ emitter.on('join_button_clicked', () => {
             console.log('something fucked up');
         }
     });
+});
+
+emitter.on('message_sent', (message) => {
+    roomChannel.trigger('client-message_recvd', message);
 });
 
 const config = {
