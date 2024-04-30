@@ -59,7 +59,7 @@ export default class Login extends Phaser.Scene {
                     alpha: 1,
                     duration: 500
                 }).addListener('complete', () => {
-                    this.emitter.emit('nameSubmitted', enteredName);                    
+                    this.emitter.emit('name_submitted', enteredName);
                 });
             }
         });

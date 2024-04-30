@@ -8,12 +8,14 @@ body {
 
 #player-id {
     position: absolute;
+    color: #111;
     top: 5px;
     left: 5px;
 }
 
 #lobby-count {
     position: absolute;
+    color: #111;
     top: 5px;
     right: 5px;
 }
