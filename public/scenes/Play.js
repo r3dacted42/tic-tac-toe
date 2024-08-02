@@ -14,14 +14,23 @@ export default class Play extends Phaser.Scene {
             });
             this.updateMessagesList();
         });
+        this.emitter.on('self_move', (data) => this.handleSelfMove(data));
+        this.emitter.on('opp_move', (data) => this.handleOppMove(data));
+        this.emitter.on('game_complete', (data) => this.handleGameComplete(data));
     }
 
-    init(members) {
-        this.membersInfo = members;
+    init(data) {
+        console.log('inside play');
+        this.membersInfo = data.members;
+        console.log(this.membersInfo);
+        this.data = data.room;
+        console.log(this.data);
     }
 
     preload() {
         this.load.image('board', 'assets/board.png');
+        this.load.image('x', 'assets/x.png');
+        this.load.image('o', 'assets/o.png');
     }
 
     create() {
@@ -61,10 +70,167 @@ export default class Play extends Phaser.Scene {
             targets: [myNameText, oppNameText, vsText, board, this.sendMessageField],
             alpha: 1,
             duration: 700
+        }).addListener('complete', () => {
+            this.turnText = {
+                _txt: this.add.text(this.cameras.main.width / 2, 150, '', {fontSize:'20px'}).setOrigin(0.5, 0.5),
+                _twn: null
+            };
+            this.moveImages = [];
+            if (this.data.game_state.next_move_id == playerId) {
+                this.setTurnText(0);
+                this.moveChar = 'x';
+                this.moveType = 1;
+                this.oppChar = 'o';
+                this.oppType = -1;
+                this.drawMoveSuggestions();
+            } else {
+                this.setTurnText(1);
+                this.moveChar = 'o';
+                this.moveType = -1;
+                this.oppChar = 'x';
+                this.oppType = 1;
+            }
         });
     }
 
-    drawBoard() {
+    /// 0: your turn  1: opp turn  2: waiting  3: draw  -1: win  -2: lose
+    setTurnText(type) {
+        if (this.turnText._twn != null) this.turnText._twn.complete();
+        if (type == 0) {
+            this.turnText._txt.setText('your turn');
+            this.turnText._twn = this.tweens.add({
+                targets: this.turnText._txt,
+                alpha: {from: 0, to: 1},
+                duration: 500,
+                repeat: -1,
+                yoyo: true
+            });
+        } else if (type == 1) {
+            this.turnText._txt.setText('opponent\'s turn');
+            this.turnText._txt.setAlpha(1);
+            this.turnText._twn = null;
+        } else if (type == 2) {
+            this.turnText._txt.setText('waiting...');
+            this.turnText._twn = this.tweens.add({
+                targets: this.turnText._txt,
+                alpha: {from: 0, to: 1},
+                duration: 200,
+                repeat: -1,
+                yoyo: true
+            });
+        } else if (type == 3) {
+            this.turnText._txt.setText('-draw-');
+            this.turnText._twn = this.tweens.add({
+                targets: this.turnText._txt,
+                alpha: {from: 0.25, to: 1},
+                duration: 1000,
+                repeat: -1,
+                yoyo: true
+            });
+        } else if (type == -1) {
+            this.turnText._txt.setText('you win! :D');
+            this.turnText._twn = this.tweens.add({
+                targets: this.turnText._txt,
+                alpha: {from: 0.5, to: 1},
+                rotation: {from: -0.05, to: 0.05},
+                duration: 500,
+                repeat: -1,
+                yoyo: true
+            });
+        } else if (type == -2) {
+            this.turnText._txt.setText('you lost :/');
+            this.turnText._txt.setAlpha(1);
+            this.turnText._twn = null;
+        }
+    }
+
+    getCoordsFromPos(pos) {
+        let center = {
+            x: this.cameras.main.width / 2,
+            y: this.cameras.main.height / 2
+        };
+        let spacing = 128;
+        return {
+            x: center.x + spacing * (pos % 3 - 1),
+            y: center.y + spacing * (Math.floor(pos / 3) - 1)
+        };
+    }
+
+    drawMoveSuggestions() {
+        let counter = 0;
+        this.moveSuggestions = [];
+        this.clearMoveSuggestions();
+        for (const posState of this.data.game_state.board_state) {
+            if (posState == 0) {
+                const _count = counter;
+                let _pos = this.getCoordsFromPos(_count);
+                let _img = this.add.image(_pos.x, _pos.y, this.moveChar);
+                _img.setOrigin(0.5).setScale(0.35).setAlpha(0).setInteractive().on('pointerup', () => {
+                    console.log(`clicked count: ${_count}`);
+                    this.clearMoveSuggestions();
+                    this.setTurnText(2);
+                    this.emitter.emit('made_move', {
+                        pos: _count,
+                        type: this.moveType
+                    });
+                });
+                let _twn = this.tweens.add({
+                    targets: _img,
+                    alpha: {from: 0.1, to: 1},
+                    duration: 500,
+                    repeat: -1,
+                    yoyo: true
+                });
+                this.moveSuggestions.push({
+                    _img: _img,
+                    _twn: _twn
+                });
+            }
+            console.log(`spawning count: ${counter}`);
+            counter++;
+        }
+    }
+
+    clearMoveSuggestions() {
+        for (const pos of this.moveSuggestions) {
+            pos._twn.complete();
+            pos._img.destroy();
+        }
+    }
+
+    drawMove(pos, char) {
+        let _pos = this.getCoordsFromPos(pos);
+        this.moveImages.push(this.add.image(_pos.x, _pos.y, char).setOrigin(0.5).setScale(0.42));
+    }
+
+    handleSelfMove(data) {
+        if (data.success) {
+            this.data = data.status;
+            this.drawMove(data.pos, this.moveChar);
+            this.setTurnText(1);
+        } else {
+            // some illegal move happened
+        }
+    }
+
+    handleOppMove(data) {
+        if (data.success) {
+            this.data = data.status;
+            this.drawMove(data.pos, this.oppChar);
+            this.drawMoveSuggestions();
+            this.setTurnText(0);
+        }
+    }
+
+    handleGameComplete(data) {
+        if (data.success) {
+            this.drawMove(data.pos, (data.type == -1 ? 'o' : 'x'));
+            if (data.status.game_state.draw === true) {
+                this.setTurnText(3);
+            } else {
+                this.setTurnText((data.status.game_state.winner === playerId) ? -1 : -2);
+            }
+        }
     }
 
     updateMessagesList() {

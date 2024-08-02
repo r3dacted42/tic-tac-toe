@@ -33,6 +33,24 @@ const lobbyCountCallback = (data) => {
 const emitter = EventDispatcher.getInstance();
 var roomChannel = null;
 
+async function getRoomStatus(roomCode, callback) {
+    if (!roomCode.startsWith('presence-')) {
+        roomCode = 'presence-' + roomCode;
+    }
+    var res = await fetch(`${window.location.origin}/api/room-status`, {
+        method: "POST",
+        body: JSON.stringify({
+            id: playerId,
+            channel_name: roomCode,
+        }),
+        headers: {
+            "Content-type": "application/json; charset=UTF-8"
+        }
+    });
+    console.log(res);
+    callback(res);
+}
+
 emitter.on('name_submitted', function (name) {
     if (signedIn || signingIn) return;
     playerName = name;
@@ -57,7 +75,13 @@ emitter.on('name_submitted', function (name) {
                 console.log(member);
                 roomCount = roomChannel.members.count;
                 if (roomCount == 2) {
-                    emitter.emit('game_start', roomChannel.members);
+                    getRoomStatus(playerRoom, async (res) => {
+                        if (res.status == 200) {
+                            res = await res.json();
+                            console.log(res.room);
+                            emitter.emit('game_start', {room: res.room, members: roomChannel.members});
+                        }
+                    });
                 }
             });
             roomChannel.bind("pusher:member_removed", (member) => {
@@ -65,7 +89,13 @@ emitter.on('name_submitted', function (name) {
                 console.log(member);
             });
             roomChannel.bind("client-message", (message) => {
-                emitter.emit("message_received", (message));
+                emitter.emit("message_received", message);
+            });
+            roomChannel.bind("client-move", (data) => {
+                emitter.emit("opp_move", data);
+            });
+            roomChannel.bind("client-game-complete", (data) => {
+                emitter.emit('game_complete', data);
             });
         });
         roomChannel.bind("pusher:subscription_failed", (error) => {
@@ -77,24 +107,10 @@ emitter.on('name_submitted', function (name) {
     });
 });
 
-async function getRoomStatus(roomCode, callback) {
-    var res = await fetch(`${window.location.origin}/api/room-status`, {
-        method: "POST",
-        body: JSON.stringify({
-            id: playerId,
-            channel_name: 'presence-' + roomCode,
-        }),
-        headers: {
-            "Content-type": "application/json; charset=UTF-8"
-        }
-    });
-    console.log(res);
-    callback(res);
-}
-
 function joinChannel(channel) {
     pusher.unsubscribe('lobby');
     pusher.unsubscribe('presence-' + playerRoom);
+    playerRoom = channel.substring(9);
     roomChannel = pusher.subscribe(channel);
     roomChannel.bind("pusher:subscription_succeeded", (data) => {
         console.log(`joined room channel!!!!!11  members count: ${roomChannel.members.count}`);
@@ -104,10 +120,22 @@ function joinChannel(channel) {
             console.log(member);
         });
         roomChannel.bind("client-message", (message) => {
-            emitter.emit("message_received", (message));
+            emitter.emit("message_received", message);
+        });
+        roomChannel.bind("client-move", (data) => {
+            emitter.emit("opp_move", data);
+        });
+        roomChannel.bind("client-game-complete", (data) => {
+            emitter.emit('game_complete', data);
         });
         if (roomCount == 2) {
-            emitter.emit('game_start', roomChannel.members);
+            getRoomStatus(channel, async (res) => {
+                if (res.status == 200) {
+                    res = await res.json();
+                    console.log(res.room);
+                    emitter.emit('game_start', {room: res.room, members: roomChannel.members});
+                }
+            });
         }
     });
     roomChannel.bind("pusher:subscription_failed", (error) => {
@@ -127,7 +155,7 @@ emitter.on('entered_room_code', async (enteredCode) => {
 });
 
 async function joinRandom(callback) {
-    const res = await fetch(`${window.location.origin}/api/join-random`, {
+    let res = await fetch(`${window.location.origin}/api/join-random`, {
         method: "POST",
         body: JSON.stringify({
             id: playerId,
@@ -159,6 +187,40 @@ emitter.on('join_button_clicked', () => {
 emitter.on('message_sent', (message) => {
     roomChannel.trigger('client-message', message);
 });
+
+emitter.on('made_move', async (data) => {
+    let res = await fetch(`${window.location.origin}/api/make-move`, {
+        method: "POST",
+        body: JSON.stringify({
+            id: playerId,
+            channel_name: 'presence-' + playerRoom,
+            pos: data.pos,
+            type: data.type
+        }),
+        headers: {
+            "Content-type": "application/json; charset=UTF-8"
+        }
+    });
+    let resStatus = res.status;
+    res = await res.json();
+    let msgData = {
+        success: true,
+        pos: data.pos,
+        type: data.type,
+        status: res.status
+    };
+    console.log(msgData);
+    if (resStatus == 200) {
+        // move success
+        emitter.emit('self_move', msgData);
+        roomChannel.trigger('client-move', msgData);
+    } else if (resStatus == 202) {
+        // game completed
+        emitter.emit('game_complete', msgData);
+        roomChannel.trigger('client-game-complete', msgData);
+    }
+});
+
 
 const config = {
     type: Phaser.AUTO,

@@ -111,7 +111,7 @@ app.post("/api/room-status", (req, res) => {
     const channel = req.body.channel_name;
     if (rooms.has(channel)) {
         console.log('someone trynna access status');
-        res.status(200).send(rooms.get(channel));
+        res.status(200).send({ room: rooms.get(channel) });
         return;
     }
     console.log(`room status not found for ${channel}`);
@@ -153,9 +153,10 @@ app.post("/api/join-random", async (req, res) => {
 
 // make a move
 // { id: _ , channel_name: _ , pos: _ , type: _ }
-// pos: [0, 8, 1] , type: {-1, 0, 1}
+// pos: [0..9] , type: {-1, 0, 1}
 app.post("/api/make-move", async (req, res) => {
     const channel = req.body.channel_name;
+    console.log(`move made in room: ${channel}`);
     if (!rooms.has(channel)) {
         res.sendStatus(404);
         return;
@@ -178,33 +179,56 @@ app.post("/api/make-move", async (req, res) => {
         res.status(403).send({ message: 'position already occupied' });
         return;
     }
+    if (state.status == 'complete') {
+        res.status(400).send({ message: 'game already completed' });
+        return;
+    }
     state.board_state[pos] = type;
     if (checkWinningState(state.board_state) !== false) {
+        console.log(`winner of room ${channel} is ${id}`);
         rooms.set(channel, {
             status: 'complete',
             count: 2,
             members: rooms.get(channel).members,
             game_state: {
                 winner: id,
-
+                draw: false,
                 board_state: state.board_state,
             }
         });
-        res.status(202).send({ message: 'game complete' });
+        res.status(202).send({ message: 'game complete', status: rooms.get(channel) });
         return;
     }
-    rooms.set(channel, {
-        status: 'running',
-        count: 2,
-        members: rooms.get(channel).members,
-        game_state: {
-            next_move_id: opp_id,
-            next_move_type: ((type == 1) ? -1 : 1),
-            board_state: state.board_state,
-        },
-    });
-    res.sendStatus(200);
-    return;
+    let vacantPos = 0;
+    for (const p of state.board_state) if (p == 0) vacantPos++;
+    if (vacantPos > 0) {
+        rooms.set(channel, {
+            status: 'running',
+            count: 2,
+            members: rooms.get(channel).members,
+            game_state: {
+                next_move_id: opp_id,
+                next_move_type: ((type == 1) ? -1 : 1),
+                board_state: state.board_state,
+            },
+        });
+        res.status(200).send({ message: 'valid move', status: rooms.get(channel) });
+        return;
+    } else {
+        console.log(`room ${channel} ended in a tie`);
+        rooms.set(channel, {
+            status: 'complete',
+            count: 2,
+            members: rooms.get(channel).members,
+            game_state: {
+                winner: null,
+                draw: true,
+                board_state: state.board_state,
+            }
+        });
+        res.status(202).send({ message: 'game complete', status: rooms.get(channel) });
+        return;
+    }
 });
 
 function checkWinningState(board) {

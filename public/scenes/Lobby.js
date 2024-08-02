@@ -58,13 +58,13 @@ export default class Lobby extends Phaser.Scene {
             duration: 700
         });
 
-        this.emitter.on('game_start', (members) => {
+        this.emitter.on('game_start', (data) => {
             this.tweens.add({
                 targets: [hello, myCodeText, this.myCodeField, this.roomCountText, enterCodeText, this.enterCodeField, joinText, this.joinButton, this.searchingText],
                 alpha: 0,
                 duration: 500
             }).addListener('complete', () => {
-                this.scene.start('play', members);
+                this.scene.start('play', data);
             });
             if (this.searchingTimer != null) {
                 this.searchingTimer.destroy();
