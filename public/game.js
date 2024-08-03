@@ -144,8 +144,9 @@ function joinChannel(channel) {
             });
         }
     });
-    roomChannel.bind("pusher:subscription_failed", (error) => {
+    roomChannel.bind("pusher:subscription_error", (error) => {
         console.log(error);
+        emitter.emit('join_failed');
     });
 }
 
@@ -178,10 +179,10 @@ async function joinRandom(callback) {
 emitter.on('join_button_clicked', () => {
     console.log('gonna search');
     joinRandom(async (res) => {
+        const result = await res.json();
         if (res.status == 202) {
-            console.log(res.message);
+            console.log(result);
         } else if (res.status == 200) {
-            const result = await res.json();
             console.log(result);
             joinChannel(result.channel);
         } else {
@@ -201,7 +202,8 @@ emitter.on('made_move', async (data) => {
             id: playerId,
             channel_name: 'presence-' + playerRoom,
             pos: data.pos,
-            type: data.type
+            type: data.type,
+            room_data: data.roomData,
         }),
         headers: {
             "Content-type": "application/json; charset=UTF-8"

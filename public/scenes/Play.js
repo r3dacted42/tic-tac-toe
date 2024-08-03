@@ -186,7 +186,8 @@ export default class Play extends Phaser.Scene {
                     this.setTurnText(2);
                     this.emitter.emit('made_move', {
                         pos: _count,
-                        type: this.moveType
+                        type: this.moveType,
+                        roomData: this.data,
                     });
                 });
                 let _twn = this.tweens.add({

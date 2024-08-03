@@ -23,6 +23,7 @@ export default class Lobby extends Phaser.Scene {
         let enterCodeText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2, 'enter a code: ', {fontSize:'20px'}).setOrigin(1, 0.5).setAlpha(0);
         this.enterCodeField = this.add.dom(this.cameras.main.width / 2, this.cameras.main.height / 2).createFromCache('textField').setOrigin(0, 0.5).setAlpha(0);
         this.enterCodeField.getChildByName('field').placeholder = 'enter code';
+        let enterCodeResult = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2 + 50, '', {fontSize:'20px'}).setOrigin(0, 0.5);
 
         let returnKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
         returnKey.on('down', () => {
@@ -69,6 +70,10 @@ export default class Lobby extends Phaser.Scene {
             if (this.searchingTimer != null) {
                 this.searchingTimer.destroy();
             }
+        });
+
+        this.emitter.on('join_failed', () => {
+            enterCodeResult.setText('room full');
         });
     }
 

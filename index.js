@@ -99,7 +99,13 @@ app.post("/api/auth-chan", async (req, res) => {
                     });
                 }
                 return;
+            } else {
+                res.status(400).send({ message: 'room full' });
+                return;
             }
+        } else {
+            res.sendStatus(500);
+            return;
         }
     }
     console.log(`rejected user auth req for ${channel}`);
@@ -153,16 +159,19 @@ app.post("/api/join-random", async (req, res) => {
 });
 
 // make a move
-// { id: _ , channel_name: _ , pos: _ , type: _ }
+// { id: _ , channel_name: _ , pos: _ , type: _ , room_data: _ }
 // pos: [0..9] , type: {-1, 0, 1}
 app.post("/api/make-move", async (req, res) => {
     const channel = req.body.channel_name;
     console.log(`move made in room: ${channel}`);
     if (!rooms.has(channel)) {
-        res.sendStatus(404);
-        return;
+        // res.sendStatus(404);
+        // return;
+        // in case server resets mid-game
+        rooms.set(channel, req.body.room_data);
     }
-    
+    console.log(rooms.get(channel));
+
     const id = req.body.id;
     const opp_id = rooms.get(channel).members[((rooms.get(channel).members[0] == id) ? 1 : 0)];
     const pos = req.body.pos;
