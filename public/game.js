@@ -68,6 +68,8 @@ emitter.on('name_submitted', function (name) {
         playerRoom = user_data.user_info.room;
         roomChannel = pusher.subscribe('presence-' + playerRoom);
         roomChannel.bind("pusher:subscription_succeeded", (data) => {
+            pusher.unsubscribe('lobby');
+            document.getElementById('lobby-count').textContent = '';
             console.log(`joined room channel!!!!!11  members count: ${roomChannel.members.count}`);
             roomCount = roomChannel.members.count;
             roomChannel.bind("pusher:member_added", (member) => {
@@ -101,7 +103,7 @@ emitter.on('name_submitted', function (name) {
                 emitter.emit("reset_complete", data);
             });
         });
-        roomChannel.bind("pusher:subscription_failed", (error) => {
+        roomChannel.bind("pusher:subscription_error", (error) => {
             console.log(error);
         });
 
@@ -112,6 +114,7 @@ emitter.on('name_submitted', function (name) {
 
 function joinChannel(channel) {
     pusher.unsubscribe('lobby');
+    document.getElementById('lobby-count').textContent = '';
     pusher.unsubscribe('presence-' + playerRoom);
     playerRoom = channel.substring(9);
     roomChannel = pusher.subscribe(channel);
