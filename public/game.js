@@ -27,7 +27,7 @@ const pusher = new Pusher('338268c30f0c785cfd2f', {
 
 const lobbyCountCallback = (data) => {
     lobbyCount = data.subscription_count;
-    document.getElementById('lobby-count').textContent = `lobby count: ${lobbyCount}`;
+    document.getElementById('lobby-count').textContent = `players in lobby: ${lobbyCount}/98`;
 };
 
 const emitter = EventDispatcher.getInstance();
@@ -97,6 +97,9 @@ emitter.on('name_submitted', function (name) {
             roomChannel.bind("client-game-complete", (data) => {
                 emitter.emit('game_complete', data);
             });
+            roomChannel.bind("client-game-reset", (data) => {
+                emitter.emit("reset_complete", data);
+            });
         });
         roomChannel.bind("pusher:subscription_failed", (error) => {
             console.log(error);
@@ -126,7 +129,10 @@ function joinChannel(channel) {
             emitter.emit("opp_move", data);
         });
         roomChannel.bind("client-game-complete", (data) => {
-            emitter.emit('game_complete', data);
+            emitter.emit("game_complete", data);
+        });
+        roomChannel.bind("client-game-reset", (data) => {
+            emitter.emit("reset_complete", data);
         });
         if (roomCount == 2) {
             getRoomStatus(channel, async (res) => {
@@ -218,6 +224,27 @@ emitter.on('made_move', async (data) => {
         // game completed
         emitter.emit('game_complete', msgData);
         roomChannel.trigger('client-game-complete', msgData);
+    }
+});
+
+emitter.on('reset_game', async () => {
+    let res = await fetch(`${window.location.origin}/api/reset-game`, {
+        method: "POST",
+        body: JSON.stringify({
+            id: playerId,
+            channel_name: 'presence-' + playerRoom
+        }),
+        headers: {
+            "Content-type": "application/json; charset=UTF-8"
+        }
+    });
+    let resStatus = res.status;
+    res = await res.json();
+    if (resStatus == 202) {
+        console.log('reset initiated');
+    } else if (resStatus == 200) {
+        roomChannel.trigger('client-game-reset', res.status);
+        emitter.emit('reset_complete', res.status);
     }
 });
 

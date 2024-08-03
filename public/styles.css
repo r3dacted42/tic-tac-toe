@@ -2,20 +2,21 @@ body {
     background-color: #111;
     color: #fff;
     font-family: 'Courier New', Courier, monospace;
+    font-size: small;
     padding: 0;
     margin: 0;
 }
 
 #player-id {
     position: absolute;
-    color: #111;
+    color: #555;
     top: 5px;
     left: 5px;
 }
 
 #lobby-count {
     position: absolute;
-    color: #111;
+    color: #555;
     top: 5px;
     right: 5px;
 }

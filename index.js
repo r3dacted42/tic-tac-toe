@@ -81,6 +81,7 @@ app.post("/api/auth-chan", async (req, res) => {
                         game_state: {
                             next_move_id: req.body.id,
                             next_move_type: 1, // 1 = X, -1 = O
+                            scores: [0, 0], // [ X, O ]
                             board_state: [0, 0, 0,
                                 0, 0, 0,
                                 0, 0, 0],
@@ -166,7 +167,7 @@ app.post("/api/make-move", async (req, res) => {
     const opp_id = rooms.get(channel).members[((rooms.get(channel).members[0] == id) ? 1 : 0)];
     const pos = req.body.pos;
     const type = req.body.type;
-    var state = rooms.get(channel).game_state;
+    let state = rooms.get(channel).game_state;
     if (id != state.next_move_id) {
         res.status(403).send({ message: 'not your turn >:(' });
         return;
@@ -179,20 +180,28 @@ app.post("/api/make-move", async (req, res) => {
         res.status(403).send({ message: 'position already occupied' });
         return;
     }
-    if (state.status == 'complete') {
+    if (rooms.get(channel).status == 'complete') {
         res.status(400).send({ message: 'game already completed' });
         return;
     }
     state.board_state[pos] = type;
     if (checkWinningState(state.board_state) !== false) {
         console.log(`winner of room ${channel} is ${id}`);
+        if (type == 1) {
+            state.scores[0]++;
+        } else {
+            state.scores[1]++;
+        }
         rooms.set(channel, {
             status: 'complete',
             count: 2,
             members: rooms.get(channel).members,
             game_state: {
+                next_move_id: opp_id,
+                next_move_type: ((type == 1) ? -1 : 1),
                 winner: id,
                 draw: false,
+                scores: state.scores,
                 board_state: state.board_state,
             }
         });
@@ -209,6 +218,7 @@ app.post("/api/make-move", async (req, res) => {
             game_state: {
                 next_move_id: opp_id,
                 next_move_type: ((type == 1) ? -1 : 1),
+                scores: state.scores,
                 board_state: state.board_state,
             },
         });
@@ -221,8 +231,11 @@ app.post("/api/make-move", async (req, res) => {
             count: 2,
             members: rooms.get(channel).members,
             game_state: {
+                next_move_id: opp_id,
+                next_move_type: ((type == 1) ? -1 : 1),
                 winner: null,
                 draw: true,
+                scores: state.scores,
                 board_state: state.board_state,
             }
         });
@@ -246,6 +259,54 @@ function checkWinningState(board) {
 
     return false;
 }
+
+// reset game
+// { id: _ , channel_name: _  }
+app.post("/api/reset-game", async (req, res) => {
+    const channel = req.body.channel_name;
+    console.log(`trying to reset room: ${channel}`);
+    if (!rooms.has(channel)) {
+        res.sendStatus(404);
+        return;
+    }
+    
+    const id = req.body.id;
+    let room = rooms.get(channel);
+    if (room.status != 'resetting') {
+        if (room.status != 'complete') {
+            res.status(403).send({ message: 'game not complete yet' });
+            return;
+        }
+        let scores = room.game_state.scores;
+        if (room.game_state.next_move_type != 1) {
+            scores = [scores[1], scores[0]];
+        }
+        rooms.set(channel, {
+            status: 'resetting',
+            count: 2,
+            members: room.members,
+            game_state: {
+                next_move_id: room.game_state.next_move_id,
+                next_move_type: 1,
+                scores: scores,
+                board_state: [0, 0, 0,
+                    0, 0, 0,
+                    0, 0, 0],
+            },
+        });
+        res.status(202).send({ message: 'reset initiated' });
+        return;
+    } else {
+        rooms.set(channel, {
+            status: 'ready',
+            count: 2,
+            members: room.members,
+            game_state: room.game_state,
+        });
+        res.status(200).send({ message: 'reset complete', status: rooms.get(channel) });
+        return;
+    }
+})
 
 const port = process.env.PORT || 5000;
 if (process.env.DEV) {
